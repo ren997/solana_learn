@@ -112,16 +112,33 @@ cd pxsol-ss
 name = "pxsol-ss"
 version = "0.1.0"
 edition = "2021"
+authors = ["asthetik"]
 
 [lib]
+# Required for compiling the program into the SBF (Solana Bytecode Format) shared object
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-solana-program = "2"
+# Using v3.0 to leverage the latest Agave SDK features
+solana-program = "3.0"
+
+# Fixed at v1.5.5 to retain 'digest' feature support while avoiding the Edition 2024 requirement
+blake3 = "=1.5.5"
+
+# Pinned to v0.3.1 to prevent manifest parsing errors caused by newer Edition 2024 releases
+constant_time_eq = "=0.3.1"
+
+# Locked to v1.7.3 to ensure consistent constant-time Base64 encoding/decoding
+base64ct = "=1.7.3"
 ```
 
+**配置说明：**
 - `cdylib`：编译为 .so 文件，用于部署到链上
 - `lib`：编译为普通 Rust 库，用于本地测试
+- `solana-program = "3.0"`：使用 Agave SDK v3.0 版本
+- `blake3 = "=1.5.5"`：固定版本，避免 Edition 2024 要求
+- `constant_time_eq = "=0.3.1"`：固定版本，防止解析错误
+- `base64ct = "=1.7.3"`：锁定版本，确保一致的 Base64 编码/解码
 
 ### 目录结构
 
