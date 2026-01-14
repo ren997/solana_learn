@@ -43,6 +43,13 @@ pub fn process_instruction(
     // - 可写：是（需要从该账户扣除 SOL）
     let account_user = solana_program::account_info::next_account_info(accounts_iter)?;
     
+    // 验证用户钱包账户必须签名
+    // 这是安全检查，确保只有账户所有者才能调用此程序
+    // 虽然 Solana 运行时层面也会验证签名，但程序层面的验证是重要的安全实践
+    if !account_user.is_signer {
+        return Err(solana_program::program_error::ProgramError::MissingRequiredSignature);
+    }
+    
     // 账户 1: 用户数据账户（PDA - Program Derived Address）
     // - 角色：存储用户数据的账户，由程序派生和管理
     // - 签名：否（PDA 没有私钥，由程序通过签名种子控制）
