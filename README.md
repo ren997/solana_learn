@@ -1,1 +1,1 @@
-# web3_learn
+# solana_learn
