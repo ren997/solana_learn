@@ -23,3 +23,14 @@ target/deploy/
 
 # 日志文件
 *.log
+
+# Python 相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+program_id.txt
+venv/
+env/
+.venv
