@@ -1,0 +1,23 @@
+# Solana 本地验证器账本数据
+test-ledger/
+
+# Solana 验证器日志
+validator-*.log
+
+# Solana 快照文件
+*.tar.zst
+*.tar.bz2
+
+# Solana 密钥对文件（如果不想提交的话）
+*-keypair.json
+
+# 操作系统相关
+.DS_Store
+Thumbs.db
+
+# IDE 相关
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

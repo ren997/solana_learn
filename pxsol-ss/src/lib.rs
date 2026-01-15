@@ -2,9 +2,9 @@
 
 use solana_program::sysvar::Sysvar;
 
-/// 注册程序入口点
-/// 这个宏将 process_instruction 函数注册为 Solana 程序的入口点
-/// Solana 运行时在处理交易时会调用这个函数
+// 注册程序入口点
+// 这个宏将 process_instruction 函数注册为 Solana 程序的入口点
+// Solana 运行时在处理交易时会调用这个函数
 solana_program::entrypoint!(process_instruction);
 
 /// Solana 程序的入口函数
@@ -184,9 +184,9 @@ pub fn process_instruction(
     }
     
     // 重新分配账户数据空间
-    // 参数1: 新数据长度
-    // 参数2: false = 不清零，保留旧数据（但会被新数据覆盖）
-    account_data.realloc(data.len(), false)?;
+    // resize() 只接受一个参数：新数据长度
+    // 注意：resize() 会自动保留旧数据（如果新长度大于旧长度）
+    account_data.resize(data.len())?;
     
     // 将新数据写入账户
     account_data.data.borrow_mut().copy_from_slice(data);
