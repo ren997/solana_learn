@@ -1,0 +1,36 @@
+# Rust 编译产物
+target/
+**/*.rs.bk
+*.pdb
+
+# Cargo 锁文件（可选，根据项目需要）
+# Cargo.lock
+
+# IDE 相关
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统相关
+.DS_Store
+Thumbs.db
+
+# Solana 部署文件
+*.so
+target/deploy/
+
+# 日志文件
+*.log
+
+# Python 相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+program_id.txt
+venv/
+env/
+.venv
