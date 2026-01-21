@@ -125,8 +125,8 @@ describe("lesson-5-pxsol-ss-anchor", () => {
       "confirmed"
     );
 
-    // 清理旧账户（测试前重置）
-    await cleanup();
+    // // 清理旧账户（测试前重置）
+    // await cleanup();
 
     // 准备测试数据
     const data1 = Buffer.from("第一次保存：这是我的第一条数据");
