@@ -506,24 +506,7 @@ delegateTransaction = await solanaWeb3.sendAndConfirmTransaction(
 
 ### 完整实现代码
 
-#### 版本一：Node.js 环境（使用 process.env）
-
 ```typescript
-/** Challenge: Mint an SPL Token
- *
- * In this challenge, you will create an SPL token!
- *
- * Goal:
- *   Mint an SPL token in a single transaction using Web3.js and the SPL Token library.
- *
- * Objectives:
- *   1. Create an SPL mint account.
- *   2. Initialize the mint with 6 decimals and your public key (feePayer) as the mint and freeze authorities.
- *   3. Create an associated token account for your public key (feePayer) to hold the minted tokens.
- *   4. Mint 21,000,000 tokens to your associated token account.
- *   5. Sign and send the transaction.
- */
-
 import {
   Keypair,
   Connection,
@@ -536,36 +519,28 @@ import {
   createAssociatedTokenAccountInstruction,
   createInitializeMint2Instruction,
   createMintToCheckedInstruction,
-  MINT_SIZE,
-  getMinimumBalanceForRentExemptMint,
-  TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
+  getMinimumBalanceForRentExemptMint,
+  MINT_SIZE,
+  TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+import "dotenv/config";
 
 import bs58 from "bs58";
 
-// Import our keypair from the wallet file
 const feePayer = Keypair.fromSecretKey(
-  // ⚠️ INSECURE KEY. DO NOT USE OUTSIDE OF THIS CHALLENGE
-  bs58.decode(process.env.SECRET ?? "")
+  bs58.decode(process.env.SECRET || "")
 );
 
-// Create a connection to the RPC endpoint
-const connection = new Connection(
-  process.env.RPC_ENDPOINT ?? "",
-  "confirmed"
-);
+const connection = new Connection(process.env.RPC_ENDPOINT || "", "confirmed");
 
-// Entry point of your TypeScript code (we will call this)
 async function main() {
   try {
-    // Generate a new keypair for the mint account
     const mint = Keypair.generate();
-
     const mintRent = await getMinimumBalanceForRentExemptMint(connection);
 
-    // 1. Create the mint account
+    // 1) Create mint account (SystemProgram.createAccount)
     const createAccountIx = SystemProgram.createAccount({
       fromPubkey: feePayer.publicKey,
       newAccountPubkey: mint.publicKey,
@@ -574,17 +549,17 @@ async function main() {
       programId: TOKEN_PROGRAM_ID,
     });
 
-    // 2. Initialize the mint account
-    // Set decimals to 6, and the mint and freeze authorities to the fee payer (you).
+    // 2) Initialize mint (decimals=6, mintAuthority=feePayer, freezeAuthority=feePayer)
+    const decimals = 6;
     const initializeMintIx = createInitializeMint2Instruction(
       mint.publicKey,
-      6,
+      decimals,
       feePayer.publicKey,
       feePayer.publicKey,
       TOKEN_PROGRAM_ID
     );
 
-    // 3. Create the associated token account
+    // 3) Create ATA for feePayer
     const associatedTokenAccount = getAssociatedTokenAddressSync(
       mint.publicKey,
       feePayer.publicKey,
@@ -592,30 +567,31 @@ async function main() {
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
+
     const createAssociatedTokenAccountIx = createAssociatedTokenAccountInstruction(
-      feePayer.publicKey,
-      associatedTokenAccount,
-      feePayer.publicKey,
-      mint.publicKey,
+      feePayer.publicKey,          // payer
+      associatedTokenAccount,       // ata
+      feePayer.publicKey,          // owner
+      mint.publicKey,              // mint
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
-    // 4. Mint 21,000,000 tokens to the associated token account
-    const mintAmount = 21_000_000n * 10n ** 6n; // 21,000,000 * 10^6 (6 decimals)
+    // 4) Mint 21,000,000 tokens to ATA (checked)
+    const mintAmount = BigInt(21_000_000) * BigInt(10 ** decimals);
+
     const mintToCheckedIx = createMintToCheckedInstruction(
-      mint.publicKey,
-      associatedTokenAccount,
-      feePayer.publicKey,
-      mintAmount,
-      6,
-      [],
+      mint.publicKey,              // mint
+      associatedTokenAccount,       // destination
+      feePayer.publicKey,          // authority (mintAuthority)
+      mintAmount,                  // amount (base units)
+      decimals,                    // decimals
+      [],                          // multiSigners
       TOKEN_PROGRAM_ID
     );
 
-    const recentBlockhash = await connection.getLatestBlockhash();
+    const recentBlockhash = await connection.getLatestBlockhash("confirmed");
 
-    // 5. Build and send the transaction
     const transaction = new Transaction({
       feePayer: feePayer.publicKey,
       blockhash: recentBlockhash.blockhash,
@@ -627,171 +603,24 @@ async function main() {
       mintToCheckedIx
     );
 
+    // 5) Signers: feePayer pays + signs mintTo authority, mint signs account creation
     const transactionSignature = await sendAndConfirmTransaction(
       connection,
       transaction,
-      [feePayer, mint] // 签名者：feePayer（支付费用）和 mint（新创建的账户）
+      [feePayer, mint]
     );
 
     console.log("Mint Address:", mint.publicKey.toBase58());
+    console.log("ATA Address:", associatedTokenAccount.toBase58());
     console.log("Transaction Signature:", transactionSignature);
   } catch (error) {
     console.error(`Oops, something went wrong: ${error}`);
   }
 }
 
-void main();
-```
+main();
 
-#### 版本二：沙盒环境兼容版本（支持浏览器/Blueshift）
 
-```typescript
-/** Challenge: Mint an SPL Token - 沙盒兼容版本
- *
- * 此版本兼容浏览器沙盒环境（如 Blueshift），支持从 globalThis 读取环境变量
- */
-
-import {
-  Keypair,
-  Connection,
-  sendAndConfirmTransaction,
-  SystemProgram,
-  Transaction,
-} from "@solana/web3.js";
-
-import {
-  createAssociatedTokenAccountInstruction,
-  createInitializeMint2Instruction,
-  createMintToCheckedInstruction,
-  MINT_SIZE,
-  getMinimumBalanceForRentExemptMint,
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-
-import bs58 from "bs58";
-
-// 兼容 Node.js 和浏览器沙盒环境的环境变量读取函数
-function getEnv(name: string): string | undefined {
-  const env =
-    typeof process !== "undefined" ? process.env : (globalThis as any);
-  return env?.[name];
-}
-
-// 在 main 函数内读取环境变量，避免顶层执行错误
-async function main() {
-  try {
-    const secret = getEnv("SECRET");
-    const rpcEndpoint = getEnv("RPC_ENDPOINT");
-
-    if (!secret) {
-      throw new Error("缺少环境变量 SECRET（base58 私钥）");
-    }
-    if (!rpcEndpoint) {
-      throw new Error("缺少环境变量 RPC_ENDPOINT");
-    }
-
-    // Import our keypair from the wallet file
-    const feePayer = Keypair.fromSecretKey(
-      // ⚠️ INSECURE KEY. DO NOT USE OUTSIDE OF THIS CHALLENGE
-      bs58.decode(secret)
-    );
-
-    // Create a connection to the RPC endpoint
-    const connection = new Connection(rpcEndpoint, "confirmed");
-
-    // 判断网络类型（可选，用于调试）
-    const genesis = await connection.getGenesisHash();
-    const cluster =
-      genesis === "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" ? "mainnet-beta" :
-      genesis === "EtWTRABZaYq6iMfeYKouRu166VU2xqa1" ? "devnet" :
-      genesis === "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z" ? "testnet" :
-      "unknown";
-    console.log("Network:", cluster);
-    console.log("Genesis Hash:", genesis);
-
-    // Generate a new keypair for the mint account
-    const mint = Keypair.generate();
-
-    const mintRent = await getMinimumBalanceForRentExemptMint(connection);
-
-    // 1. Create the mint account
-    const createAccountIx = SystemProgram.createAccount({
-      fromPubkey: feePayer.publicKey,
-      newAccountPubkey: mint.publicKey,
-      space: MINT_SIZE,
-      lamports: mintRent,
-      programId: TOKEN_PROGRAM_ID,
-    });
-
-    // 2. Initialize the mint account
-    // Set decimals to 6, and the mint and freeze authorities to the fee payer (you).
-    const initializeMintIx = createInitializeMint2Instruction(
-      mint.publicKey,
-      6,
-      feePayer.publicKey,
-      feePayer.publicKey,
-      TOKEN_PROGRAM_ID
-    );
-
-    // 3. Create the associated token account
-    const associatedTokenAccount = getAssociatedTokenAddressSync(
-      mint.publicKey,
-      feePayer.publicKey,
-      false,
-      TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-    const createAssociatedTokenAccountIx = createAssociatedTokenAccountInstruction(
-      feePayer.publicKey,
-      associatedTokenAccount,
-      feePayer.publicKey,
-      mint.publicKey,
-      TOKEN_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-
-    // 4. Mint 21,000,000 tokens to the associated token account
-    const mintAmount = 21_000_000n * 10n ** 6n; // 21,000,000 * 10^6 (6 decimals)
-    const mintToCheckedIx = createMintToCheckedInstruction(
-      mint.publicKey,
-      associatedTokenAccount,
-      feePayer.publicKey,
-      mintAmount,
-      6,
-      [],
-      TOKEN_PROGRAM_ID
-    );
-
-    const recentBlockhash = await connection.getLatestBlockhash();
-
-    // 5. Build and send the transaction
-    const transaction = new Transaction({
-      feePayer: feePayer.publicKey,
-      blockhash: recentBlockhash.blockhash,
-      lastValidBlockHeight: recentBlockhash.lastValidBlockHeight,
-    }).add(
-      createAccountIx,
-      initializeMintIx,
-      createAssociatedTokenAccountIx,
-      mintToCheckedIx
-    );
-
-    const transactionSignature = await sendAndConfirmTransaction(
-      connection,
-      transaction,
-      [feePayer, mint] // 签名者：feePayer（支付费用）和 mint（新创建的账户）
-    );
-
-    console.log("Mint Address:", mint.publicKey.toBase58());
-    console.log("Transaction Signature:", transactionSignature);
-  } catch (error) {
-    console.error(`Oops, something went wrong: ${error}`);
-  }
-}
-
-void main();
 ```
 
 ### 关键点说明
