@@ -11,6 +11,10 @@ validator-*.log
 # Solana 密钥对文件（如果不想提交的话）
 *-keypair.json
 
+# 构建产物
+target/
+**/target/
+
 # 操作系统相关
 .DS_Store
 Thumbs.db
