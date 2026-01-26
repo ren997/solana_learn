@@ -94,33 +94,45 @@ def genuser():
 
 
 def airdrop():
-    user = pxsol.wallet.Wallet(pxsol.core.PriKey.base58_decode(args.prikey))
-    pubkey_mint = pxsol.core.PubKey.base58_decode(info_load('pubkey_mint'))
-    pubkey_mana = pxsol.core.PubKey.base58_decode(info_load('pubkey_mana'))
-    pubkey_mana_seed = bytearray([])
-    pubkey_mana_auth = pubkey_mana.derive_pda(pubkey_mana_seed)[0]
-    pubkey_mana_spla = pxsol.wallet.Wallet.view_only(pubkey_mana_auth).spl_account(pubkey_mint)
-    rq = pxsol.core.Requisition(pubkey_mana, [], bytearray())
-    rq.account.append(pxsol.core.AccountMeta(user.pubkey, 3))
-    rq.account.append(pxsol.core.AccountMeta(user.spl_account(pubkey_mint), 1))
-    rq.account.append(pxsol.core.AccountMeta(pubkey_mana, 0))
-    rq.account.append(pxsol.core.AccountMeta(pubkey_mana_auth, 0))
-    rq.account.append(pxsol.core.AccountMeta(pubkey_mana_spla, 1))
-    rq.account.append(pxsol.core.AccountMeta(pubkey_mint, 0))
-    rq.account.append(pxsol.core.AccountMeta(pxsol.program.System.pubkey, 0))
-    rq.account.append(pxsol.core.AccountMeta(pxsol.program.Token.pubkey, 0))
-    rq.account.append(pxsol.core.AccountMeta(pxsol.program.AssociatedTokenAccount.pubkey, 0))
-    rq.data = bytearray()
-    tx = pxsol.core.Transaction.requisition_decode(user.pubkey, [rq])
-    tx.message.recent_blockhash = pxsol.base58.decode(pxsol.rpc.get_latest_blockhash({})['blockhash'])
-    tx.sign([user.prikey])
+    # 1. 准备账户地址
+    user = pxsol.wallet.Wallet(pxsol.core.PriKey.base58_decode(args.prikey))  # 用户钱包（领取空投的人）
+    pubkey_mint = pxsol.core.PubKey.base58_decode(info_load('pubkey_mint'))  # 代币 Mint 地址
+    pubkey_mana = pxsol.core.PubKey.base58_decode(info_load('pubkey_mana'))  # 空投程序地址
+    
+    # 2. 派生程序的 PDA 和其代币账户
+    pubkey_mana_seed = bytearray([])  # 空种子
+    pubkey_mana_auth = pubkey_mana.derive_pda(pubkey_mana_seed)[0]  # 程序的 PDA（持有代币）
+    pubkey_mana_spla = pxsol.wallet.Wallet.view_only(pubkey_mana_auth).spl_account(pubkey_mint)  # PDA 的代币账户（ATA）
+    
+    # 3. 构建交易指令（Instruction）
+    rq = pxsol.core.Requisition(pubkey_mana, [], bytearray())  # 创建指令，调用空投程序
+    # 添加指令需要的账户（按顺序传递给程序）
+    rq.account.append(pxsol.core.AccountMeta(user.pubkey, 3))  # [0] 用户账户（签名者 + 可写）
+    rq.account.append(pxsol.core.AccountMeta(user.spl_account(pubkey_mint), 1))  # [1] 用户的代币账户（可写）
+    rq.account.append(pxsol.core.AccountMeta(pubkey_mana, 0))  # [2] 程序账户（只读）
+    rq.account.append(pxsol.core.AccountMeta(pubkey_mana_auth, 0))  # [3] 程序 PDA（只读）
+    rq.account.append(pxsol.core.AccountMeta(pubkey_mana_spla, 1))  # [4] PDA 的代币账户（可写）
+    rq.account.append(pxsol.core.AccountMeta(pubkey_mint, 0))  # [5] 代币 Mint（只读）
+    rq.account.append(pxsol.core.AccountMeta(pxsol.program.System.pubkey, 0))  # [6] 系统程序
+    rq.account.append(pxsol.core.AccountMeta(pxsol.program.Token.pubkey, 0))  # [7] Token 程序
+    rq.account.append(pxsol.core.AccountMeta(pxsol.program.AssociatedTokenAccount.pubkey, 0))  # [8] ATA 程序
+    rq.data = bytearray()  # 指令数据（空，程序不需要额外参数）
+    
+    # 4. 构建交易
+    tx = pxsol.core.Transaction.requisition_decode(user.pubkey, [rq])  # 将指令打包成交易
+    tx.message.recent_blockhash = pxsol.base58.decode(pxsol.rpc.get_latest_blockhash({})['blockhash'])  # 设置最新区块哈希
+    tx.sign([user.prikey])  # 用用户私钥签名
+    
+    # 5. 发送交易并等待确认
     pxsol.log.debugln(f'main: request spl airdrop')
-    txid = pxsol.rpc.send_transaction(base64.b64encode(tx.serialize()).decode(), {})
-    pxsol.rpc.wait([txid])
-    tlog = pxsol.rpc.get_transaction(txid, {})
+    txid = pxsol.rpc.send_transaction(base64.b64encode(tx.serialize()).decode(), {})  # 发送交易
+    pxsol.rpc.wait([txid])  # 等待交易确认
+    
+    # 6. 查询交易日志和余额
+    tlog = pxsol.rpc.get_transaction(txid, {})  # 获取交易详情
     for e in tlog['meta']['logMessages']:
-        pxsol.log.debugln(e)
-    splcnt = user.spl_balance(pubkey_mint)
+        pxsol.log.debugln(e)  # 打印程序日志
+    splcnt = user.spl_balance(pubkey_mint)  # 查询领取后的代币余额
     pxsol.log.debugln(f'main: request spl airdrop done recv={splcnt[0] / 10**splcnt[1]}')
 
 

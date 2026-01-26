@@ -1,0 +1,14 @@
+{
+    "develop": {
+        "pubkey_mint": "EWss2T7Wxo7WJpMWoRhhMQdz9Xr2jWbtLAmUo1BqfVAY",
+        "pubkey_mana": "AQkWeJJmQtsXbznwx65CGVZp9dQmyecDXA9f64GvrpVT"
+    },
+    "mainnet": {
+        "pubkey_mint": "6B1ztFd9wSm3J5zD5vmMNEKg2r85M41wZMUW7wXwvEPH",
+        "pubkey_mana": "AQkWeJJmQtsXbznwx65CGVZp9dQmyecDXA9f64GvrpVT"
+    },
+    "testnet": {
+        "pubkey_mint": "HsHTHJFg5WDwnz53C6FCUZ1kVw2FzVUde4nBxfYCArs2",
+        "pubkey_mana": "AQkWeJJmQtsXbznwx65CGVZp9dQmyecDXA9f64GvrpVT"
+    }
+}
