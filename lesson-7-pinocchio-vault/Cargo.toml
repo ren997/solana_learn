@@ -1,0 +1,22 @@
+[package]
+name = "vault-program"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = ["perf"]
+perf = []
+
+[dependencies]
+pinocchio = "0.5"
+pinocchio-system = "0.5"
+thiserror = { version = "2.0", default-features = false }
+num-derive = "0.4"
+num-traits = "0.2"
+
+[dev-dependencies]
+mollusk-svm = "0.1"
+solana-sdk = "2.0"

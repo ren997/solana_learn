@@ -31,7 +31,7 @@ pub mod pxsol_spl_anchor {
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_account, signer_seeds);
         token_2022::transfer_checked(cpi_ctx, AIRDROP_AMOUNT, TOKEN_DECIMALS)?;
 
-        Ok(())
+        Ok(()) 
     }
 }
 
