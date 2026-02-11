@@ -1,1 +1,39 @@
 /target
+
+# Node.js / pnpm
+clients/node_modules/
+clients/.pnpm-store/
+clients/dist/
+clients/build/
+clients/*.tsbuildinfo
+
+# 日志文件
+clients/*.log
+clients/npm-debug.log*
+clients/pnpm-debug.log*
+clients/yarn-debug.log*
+clients/yarn-error.log*
+
+# 环境变量文件
+clients/.env
+clients/.env.local
+clients/.env.*.local
+
+# IDE 配置
+clients/.vscode/
+clients/.idea/
+clients/*.swp
+clients/*.swo
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+clients/*.tmp
+clients/*.temp
+clients/.cache/
+
+# 测试覆盖率
+clients/coverage/
+clients/.nyc_output/
