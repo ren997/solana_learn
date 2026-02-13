@@ -1,0 +1,130 @@
+---
+alwaysApply: true
+description: Solana 开发指南和最佳实践（全局规则）
+---
+
+# Solana 开发规则（全局）
+
+## Solana 核心概念
+
+### Accounts（账户）
+- Solana 使用账户模型存储数据
+- 账户分为：系统账户、程序账户、数据账户
+- 账户有 owner（所有者）和 data（数据）字段
+- 参考: https://solana.com/docs/core/accounts
+
+### Programs（程序）
+- Solana 的智能合约称为"程序"
+- 程序是无状态的，数据存储在账户中
+- 程序通过 entrypoint 函数接收指令
+- 参考: https://solana.com/docs/core/programs
+
+### PDA (Program Derived Address)
+- 确定性地址，由程序控制
+- 用于创建程序拥有的账户
+- 常用于 Escrow、Vault 等场景
+- 参考: https://solana.com/docs/core/pda
+
+### CPI (Cross Program Invocation)
+- 程序调用其他程序的方式
+- 例如：调用 Token Program 转移代币
+- 参考: https://solana.com/docs/core/cpi
+
+### SPL Token
+- Solana 的代币标准
+- 关键概念：Mint、Token Account、ATA (Associated Token Account)
+- 参考: https://solana.com/docs/tokens/basics
+
+## 开发框架
+
+### Anchor 框架
+- 高级框架，简化 Solana 程序开发
+- 使用 `#[account]` 宏定义账户结构
+- 自动生成 IDL 和客户端代码
+- 参考: https://solana.com/docs/programs/anchor
+
+### Pinocchio 框架
+- 轻量级框架，更接近原生 Solana 开发
+- 使用 `AccountView` 而不是 Anchor 的 `Account`
+- 账户验证需要手动实现
+- 使用 `TryFrom` trait 解析账户
+- 使用 discriminator（标识符）区分不同指令
+- 通过 `instruction_data.split_first()` 解析指令
+
+### 原生 Solana 程序
+- 直接使用 Solana SDK
+- 完全控制程序逻辑
+- 需要手动处理所有细节
+
+## 开发最佳实践
+
+### 1. 账户验证
+- 始终验证账户的所有者（owner）
+- 验证签名者（signer）
+- 验证账户数据的有效性
+- 验证账户数量是否足够
+
+### 2. 错误处理
+- 使用 `ProgramError` 返回明确的错误
+- 提供有意义的错误信息
+- 检查边界条件
+- 使用 `?` 操作符进行错误传播
+
+### 3. 安全性
+- 验证所有输入
+- 检查账户权限
+- 防止重入攻击
+- 验证 PDA seeds
+- 使用 checked 数学运算防止溢出
+
+### 4. 代码组织
+- 将指令分离到独立的模块
+- 使用结构体组织账户参数
+- 实现清晰的错误处理
+- 遵循单一职责原则
+
+## MCP 工具使用
+
+### 什么是 MCP
+MCP (Model Context Protocol) 允许 AI 助手访问外部工具和服务，获取实时、准确的 Solana 开发信息。
+
+### 可用的 Solana MCP 工具
+
+1. **Solana Expert: Ask For Help**
+   - 用途：询问 Solana 相关问题（如何实现、概念解释、API 使用、错误处理）
+   - 使用场景：遇到具体问题时，提供详细上下文后询问
+   - 示例：如何创建 PDA、如何处理 CPI 调用、如何验证账户
+
+2. **Solana Documentation Search**
+   - 用途：搜索 Solana 官方文档库
+   - 使用场景：查找特定功能的文档、API 参考、示例代码
+   - 示例：搜索 "PDA creation"、"token transfer"、"account validation"
+
+3. **Ask Solana Anchor Framework Expert**
+   - 用途：Anchor 框架相关问题（API、SDK、错误处理）
+   - 使用场景：了解 Anchor 如何处理类似问题，作为参考
+
+### 使用建议
+- 遇到复杂问题时，优先使用 MCP 工具获取准确答案
+- 提供尽可能多的上下文信息（代码、错误信息、目标）
+- 结合官方文档和 MCP 工具的回答，获得最佳解决方案
+
+## 参考资源
+
+### 官方文档
+- Solana 核心文档: https://solana.com/docs/core/accounts
+- Token 基础: https://solana.com/docs/tokens/basics
+- 程序开发: https://solana.com/docs/programs
+- Cookbook 示例: https://solana.com/developers/cookbook
+
+### LLM 优化文档
+- 完整文档: https://solana.com/llms-full.txt
+- AI 指南: https://solana.com/SKILL.md
+
+## 代码风格
+
+- 使用 Rust 标准命名约定
+- 添加清晰的注释（中文或英文）
+- 遵循 SOLID 原则
+- 保持代码简洁（KISS）
+- 避免过度设计（YAGNI）
